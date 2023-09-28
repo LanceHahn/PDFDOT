@@ -3,7 +3,7 @@ from math import log
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def findKeyword(document, pageNum, targetWord):
+def findKeyword(document, pageNum):
     """
     reads in PDF document, extracts text, and splits text into list.
     converts all values into lower case.
@@ -111,7 +111,7 @@ def reportHisto(histogram, TopN, title="title", xLabel = 'xLabel'):
     return
 
 
-wList = findKeyword('DOT_PerformancePlan.pdf',20,'safety')
+wList = findKeyword('DOT_PerformancePlan.pdf',20)
 cleanedList = cleanText(wList)
 wFreq = calculateDocFreqs(cleanedList)
 scores = scoreWords(wList, wFreq)
