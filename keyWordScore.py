@@ -20,7 +20,6 @@ def findKeyword(document, pageNum, targetWord):
     pageOutputLower = [x.lower() for x in pageOutput]
     return pageOutputLower
 
-wList = findKeyword('DOT_PerformancePlan.pdf',20,'safety')
 
 def cleanText(data):
     """
@@ -37,10 +36,8 @@ def cleanText(data):
         clean = clean.lower()
         if len(clean) > 0:
             cleaned.append(clean)
-    print(cleaned)
     return cleaned
 
-cleanedList = cleanText(wList)
 
 def calculateDocFreqs(wList):
     """
@@ -58,7 +55,6 @@ def calculateDocFreqs(wList):
             wFreq[w] = count
     return wFreq
 
-wFreq = calculateDocFreqs(cleanedList)
 
 def scoreWords(wList, wFreq):
     """
@@ -79,7 +75,6 @@ def scoreWords(wList, wFreq):
         scores[word] = tf * idf
     return scores
 
-scores = scoreWords(wList, wFreq)
 
 
 def reportScores(scores, TopN):
@@ -90,9 +85,7 @@ def reportScores(scores, TopN):
             ix += 1
     return
 
-reportScores(scores, 20)
 
-# top 2 are numbers, most likely headers... should we eliminate all numerical values? is that too broad of a sweep?
 
 def reportHisto(histogram, TopN, title="title", xLabel = 'xLabel'):
     """
@@ -117,4 +110,13 @@ def reportHisto(histogram, TopN, title="title", xLabel = 'xLabel'):
     plt.show()
     return
 
-reportHisto(scores,20)
+
+wList = findKeyword('DOT_PerformancePlan.pdf',20,'safety')
+cleanedList = cleanText(wList)
+wFreq = calculateDocFreqs(cleanedList)
+scores = scoreWords(wList, wFreq)
+reportScores(scores, 5)
+# top 2 are numbers, most likely headers... should we eliminate all numerical values? is that too broad of a sweep?
+reportHisto(scores,5)
+
+# try to make a new function to go after cleanedList that can get rid of integers
