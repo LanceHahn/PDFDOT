@@ -3,6 +3,31 @@ from math import log
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+def readCSV(fName):
+    with open(fName, 'r') as f:
+        data = f.readlines()
+    cleaned = []
+    for datum in data:
+        clean0 = datum.rstrip()
+        row = clean0.split(',')
+        cleaned.append(row)
+    return cleaned
+
+KFreq = readCSV('KFfreq.csv')
+
+
+def getFreqs(fName):
+    freqDict = dict()
+    freqData = readCSV(fName)
+    for row in freqData:
+        freqDict[row[0]] = int(row[1])
+    return freqDict
+
+dictFreqs = getFreqs('KFfreq.csv')
+KFreqList = list(dictFreqs)
+
+
+
 def findKeyword(document, pageNum):
     """
     reads in PDF document, extracts text, and splits text into list.
@@ -30,8 +55,10 @@ def cleanText(data):
     cleaned = []
     for datum in data:
         clean = datum.rstrip()
+        digits = ['0','1','2','3','4','5','6','7','8','9']
         for char in ['.', ',', '"', "'", "?", '“', '\t', '\r', '\n',
-                     '’', '”', ':']:
+                     '’', '”', ':', '*', '|', '%','(',')','[',']',
+                     '•', '&'] + digits:
             clean = clean.replace(char, '')
         clean = clean.lower()
         if len(clean) > 0:
@@ -114,9 +141,46 @@ def reportHisto(histogram, TopN, title="title", xLabel = 'xLabel'):
 wList = findKeyword('DOT_PerformancePlan.pdf',20)
 cleanedList = cleanText(wList)
 wFreq = calculateDocFreqs(cleanedList)
-scores = scoreWords(wList, wFreq)
+scores = scoreWords(cleanedList, wFreq)
 reportScores(scores, 5)
 # top 2 are numbers, most likely headers... should we eliminate all numerical values? is that too broad of a sweep?
-reportHisto(scores,5)
 
-# try to make a new function to go after cleanedList that can get rid of integers
+# reportHisto(scores,5)
+
+
+def realWords(cleanedList):
+    """
+    checks cleanedList of extracted text against KFreq file
+    :param cleanedList: extracted text to analyze
+    :return: realWordList is value that is found in both cleanedList and KFreq
+    """
+    realWordList = []
+    nonWordList = []
+    for i in cleanedList:
+        if i in KFreqList:
+            realWordList.append(i)
+        else:
+            nonWordList.append(i)
+    return realWordList
+realWordsList = realWords(cleanedList)
+
+def nonWords(cleanedList):
+    """
+    checks cleanedList of extracted text against KFreq file
+    :param cleanedList: extracted text to analyze
+    :return: nonWordsList is value that is in cleanedList but not in KFreq file
+    """
+    realWordList = []
+    nonWordList = []
+    for i in cleanedList:
+        if i in KFreqList:
+            realWordList.append(i)
+        else:
+            nonWordList.append(i)
+    return nonWordList
+
+nonWordsList = nonWords(cleanedList)
+
+
+reportScores(scoreWords(realWordsList, wFreq), 5)
+reportScores(scoreWords(nonWordsList, wFreq), 10)
