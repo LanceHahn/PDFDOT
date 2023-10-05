@@ -13,8 +13,6 @@ def readCSV(fName):
         cleaned.append(row)
     return cleaned
 
-KFreq = readCSV('KFfreq.csv')
-
 
 def getFreqs(fName):
     freqDict = dict()
@@ -22,10 +20,6 @@ def getFreqs(fName):
     for row in freqData:
         freqDict[row[0]] = int(row[1])
     return freqDict
-
-dictFreqs = getFreqs('KFfreq.csv')
-KFreqList = list(dictFreqs)
-
 
 
 def findKeyword(document, pageNum):
@@ -138,14 +132,6 @@ def reportHisto(histogram, TopN, title="title", xLabel = 'xLabel'):
     return
 
 
-wList = findKeyword('DOT_PerformancePlan.pdf',20)
-cleanedList = cleanText(wList)
-wFreq = calculateDocFreqs(cleanedList)
-scores = scoreWords(cleanedList, wFreq)
-reportScores(scores, 5)
-# top 2 are numbers, most likely headers... should we eliminate all numerical values? is that too broad of a sweep?
-
-# reportHisto(scores,5)
 
 
 def realWords(cleanedList):
@@ -162,9 +148,8 @@ def realWords(cleanedList):
         else:
             nonWordList.append(i)
     return realWordList
-realWordsList = realWords(cleanedList)
 
-def nonWords(cleanedList):
+def nonWords(cleanedList, goodWords):
     """
     checks cleanedList of extracted text against KFreq file
     :param cleanedList: extracted text to analyze
@@ -173,14 +158,32 @@ def nonWords(cleanedList):
     realWordList = []
     nonWordList = []
     for i in cleanedList:
-        if i in KFreqList:
+        if i in goodWords:
             realWordList.append(i)
         else:
             nonWordList.append(i)
     return nonWordList
 
-nonWordsList = nonWords(cleanedList)
+
+if __name__ == "__main__":
+
+    KFreq = readCSV('KFfreq.csv')
+
+    dictFreqs = getFreqs('KFfreq.csv')
+    KFreqList = list(dictFreqs)
+
+    wList = findKeyword('DOT_PerformancePlan.pdf',20)
+    cleanedList = cleanText(wList)
+    wFreq = calculateDocFreqs(cleanedList)
+    scores = scoreWords(cleanedList, wFreq)
+    reportScores(scores, 5)
+    # top 2 are numbers, most likely headers... should we eliminate all numerical values? is that too broad of a sweep?
+
+    # reportHisto(scores,5)
+
+    realWordsList = realWords(cleanedList)
+    nonWordsList = nonWords(cleanedList, KFreqList)
 
 
-reportScores(scoreWords(realWordsList, wFreq), 5)
-reportScores(scoreWords(nonWordsList, wFreq), 10)
+    reportScores(scoreWords(realWordsList, wFreq), 5)
+    reportScores(scoreWords(nonWordsList, wFreq), 10)
