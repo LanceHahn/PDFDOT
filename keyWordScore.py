@@ -22,22 +22,20 @@ def getFreqs(fName):
     return freqDict
 
 
-def findKeyword(document, pageNum):
+def extractList(document, pageNum):
     """
     reads in PDF document, extracts text, and splits text into list.
     converts all values into lower case.
-    ** consider eliminating numerical values in this function **
     :param document: PDF document to analyze
     :param pageNum: page number you are searching
-    :param targetWord: keyword to find
     :return: list of values extracted from PDF
     """
     reader = PdfReader(document)
     page = reader.pages[pageNum]
     pageExtract = page.extract_text()
     pageOutput = pageExtract.split()
-    pageOutputLower = [x.lower() for x in pageOutput]
-    return pageOutputLower
+    pageOutput = [x.lower() for x in pageOutput]
+    return pageOutput
 
 
 def cleanText(data):
@@ -60,37 +58,37 @@ def cleanText(data):
     return cleaned
 
 
-def calculateDocFreqs(wList):
+def calculateDocFreqs(wordList):
     """
     takes in a list and counts the frequency of values in list
-    :param wList: a list whose values will be counted
-    :return: dictionary of value in list and its frequency in that list
+    :param wordList: a list whose values will be counted
+    :return: wordFreq: dictionary of value in list and its frequency in that list
     """
-    wFreq = dict()
-    for w in wList:
-        if w not in wFreq.keys():
+    wordFreq = dict()
+    for w in wordList:
+        if w not in wordFreq.keys():
             count = 0
-            for ix in range(len(wList)):
-                if w == wList[ix]:
+            for ix in range(len(wordList)):
+                if w == wordList[ix]:
                     count += 1
-            wFreq[w] = count
-    return wFreq
+            wordFreq[w] = count
+    return wordFreq
 
 
-def scoreWords(wList, wFreq):
+def scoreWords(wordList, wordFreq):
     """
     calculates tf-idf score for each value in dictionary
-    :param wList: list of values whose frequency are counted
-    :param wFreq: dictionary that gives value:frequency
+    :param wordList: list of values whose frequency are counted
+    :param wordFreq: dictionary that gives value:frequency
     :return:
     """
-    docFreqs = calculateDocFreqs(wList)
+    docFreqs = calculateDocFreqs(wordList)
     scores = dict()
     maxFreq = max(docFreqs.values())
     for word in docFreqs.keys():
         tf = 0.5 + 0.5 * (docFreqs[word] / maxFreq)
-        if word in wFreq.keys():
-            idf = log(500/(1+wFreq[word]))
+        if word in wordFreq.keys():
+            idf = log(500/(1+wordFreq[word]))
         else:
             idf = log(500/1)
         scores[word] = tf * idf
@@ -134,56 +132,60 @@ def reportHisto(histogram, TopN, title="title", xLabel = 'xLabel'):
 
 
 
-def realWords(cleanedList):
+def realWords(cleanedList, freqFile):
     """
     checks cleanedList of extracted text against KFreq file
     :param cleanedList: extracted text to analyze
     :return: realWordList is value that is found in both cleanedList and KFreq
     """
     realWordList = []
-    nonWordList = []
+    dictFreqs = getFreqs(freqFile)
+    libraryList = list(dictFreqs)
     for i in cleanedList:
-        if i in KFreqList:
+        if i in libraryList:
             realWordList.append(i)
-        else:
-            nonWordList.append(i)
     return realWordList
 
-def nonWords(cleanedList, goodWords):
+def nonWords(cleanedList, freqFile):
     """
     checks cleanedList of extracted text against KFreq file
     :param cleanedList: extracted text to analyze
     :return: nonWordsList is value that is in cleanedList but not in KFreq file
     """
-    realWordList = []
-    nonWordList = []
+    nonWordsList = []
+    dictFreqs = getFreqs(freqFile)
+    libraryList = list(dictFreqs)
     for i in cleanedList:
-        if i in goodWords:
-            realWordList.append(i)
-        else:
-            nonWordList.append(i)
-    return nonWordList
+        if i not in libraryList:
+            nonWordsList.append(i)
+    return nonWordsList
 
 
 if __name__ == "__main__":
 
-    KFreq = readCSV('KFfreq.csv')
+    # list of extracted text from PDF
+    wList = extractList('DOT_PerformancePlan.pdf',20)
 
-    dictFreqs = getFreqs('KFfreq.csv')
-    KFreqList = list(dictFreqs)
+    # cleaned list of extracted text
+    newList = cleanText(wList)
 
-    wList = findKeyword('DOT_PerformancePlan.pdf',20)
-    cleanedList = cleanText(wList)
-    wFreq = calculateDocFreqs(cleanedList)
-    scores = scoreWords(cleanedList, wFreq)
-    reportScores(scores, 5)
-    # top 2 are numbers, most likely headers... should we eliminate all numerical values? is that too broad of a sweep?
+   # frequency that words apepar in cleaned list
+    wFreq = calculateDocFreqs(newList)
 
-    # reportHisto(scores,5)
+    # calculated tf-idf scores of each word in cleaned list
+    wordScores = scoreWords(newList, wFreq)
 
-    realWordsList = realWords(cleanedList)
-    nonWordsList = nonWords(cleanedList, KFreqList)
+    # print words with top five tf-idf scores
+    reportScores(wordScores, 5)
 
+    # words that are in cleaned list and KF frequency file
+    realList = realWords(newList, 'KFfreq.csv')
 
-    reportScores(scoreWords(realWordsList, wFreq), 5)
-    reportScores(scoreWords(nonWordsList, wFreq), 10)
+    # words that are in cleaned list but not in KF frequency file
+    nonList = nonWords(newList, 'KFfreq.csv')
+
+    # top 5 tf-idf scores of 'real' words
+    reportScores(scoreWords(realList, wFreq), 5)
+
+    # top 10 tf-idf scores of 'non-real' words
+    reportScores(scoreWords(nonList, wFreq), 10)
