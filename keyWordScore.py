@@ -37,6 +37,24 @@ def extractList(document, pageNum):
     pageOutput = [x.lower() for x in pageOutput]
     return pageOutput
 
+def extractDict(document):
+    """
+    uses PyPDF2 to extract text from a page of a given document,
+    iterated over all pages in a documnet
+    :param document: document to be read in
+    :return: textDict: dictionary where key is page num and value is list of text
+    """
+    textDict = {}
+    reader = PdfReader(document)
+    totalPages = len(reader.pages)
+    for i in range(totalPages):
+        page = reader.pages[i]
+        pageExtract = page.extract_text()
+        pageOutput = pageExtract.split()
+        pageOutput = [x.lower() for x in pageOutput]
+        textDict[i] = pageOutput
+    return textDict
+
 
 def cleanText(data):
     """
