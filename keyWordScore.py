@@ -55,6 +55,24 @@ def extractDict(document):
         textDict[i] = pageOutput
     return textDict
 
+def separateDict(textDict):
+    """
+    reads in a dictionary where each value is a list and compiles those lists
+    into one large list of all values
+    :param textDict: dictionary to be split into only its values
+    :return: flat_list is the list of all values from original dictionary
+    (flat_list still needs to be cleaned)
+    """
+    valuesList = []
+    keys = textDict.keys()
+    dictValues = textDict.values()
+    for i in dictValues:
+        valuesList.append(i)
+    wordList = []
+    for list in valuesList:
+        wordList.extend(list)
+    return wordList
+
 
 def cleanText(data):
     """
@@ -67,8 +85,8 @@ def cleanText(data):
         clean = datum.rstrip()
         digits = ['0','1','2','3','4','5','6','7','8','9']
         for char in ['.', ',', '"', "'", "?", '“', '\t', '\r', '\n',
-                     '’', '”', ':', '*', '|', '%','(',')','[',']',
-                     '•', '&'] + digits:
+                     '’', '”', ':', ';','*', '|', '%','(',')','[',']',
+                     '•', '&', '/'] + digits:
             clean = clean.replace(char, '')
         clean = clean.lower()
         if len(clean) > 0:
@@ -181,12 +199,17 @@ def nonWords(cleanedList, freqFile):
 
 if __name__ == "__main__":
 
-    # list of extracted text from PDF
-    wList = extractList('DOT_PerformancePlan.pdf',20)
+    # if you want just a certain page, use extractList
+    # wList = extractList('DOT_PerformancePlan.pdf', 10)
+
+    # dictionary of {page number: list of extracted text} from PDF
+    wDict = extractDict('DOT_PerformancePlan.pdf')
+
+    # compiled list of all text from PDF
+    wList = separateDict(wDict)
 
     # cleaned list of extracted text
     newList = cleanText(wList)
-
    # frequency that words apepar in cleaned list
     wFreq = calculateDocFreqs(newList)
 
@@ -194,16 +217,19 @@ if __name__ == "__main__":
     wordScores = scoreWords(newList, wFreq)
 
     # print words with top five tf-idf scores
-    reportScores(wordScores, 5)
+    # reportScores(wordScores, 20)
 
     # words that are in cleaned list and KF frequency file
     realList = realWords(newList, 'KFfreq.csv')
+    # print(realList)
 
     # words that are in cleaned list but not in KF frequency file
     nonList = nonWords(newList, 'KFfreq.csv')
 
     # top 5 tf-idf scores of 'real' words
-    reportScores(scoreWords(realList, wFreq), 5)
+    reportScores(scoreWords(realList, wFreq), 10)
 
     # top 10 tf-idf scores of 'non-real' words
     reportScores(scoreWords(nonList, wFreq), 10)
+
+
