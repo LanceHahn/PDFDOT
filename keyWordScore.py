@@ -101,10 +101,11 @@ def calculateDocFreqs(wordList):
     :return: wordFreq: dictionary of value in list and its frequency in that list
     """
     wordFreq = dict()
-    for w in wordList:
+    numOfWords = len(wordList)
+    for wIX, w  in enumerate(wordList):
         if w not in wordFreq.keys():
             count = 0
-            for ix in range(len(wordList)):
+            for ix in range(wIX, numOfWords):
                 if w == wordList[ix]:
                     count += 1
             wordFreq[w] = count
