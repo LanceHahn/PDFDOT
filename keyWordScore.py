@@ -2,6 +2,7 @@ from PyPDF2 import PdfReader
 from math import log
 import seaborn as sns
 import matplotlib.pyplot as plt
+import datetime as dt
 
 def readCSV(fName):
     with open(fName, 'r') as f:
@@ -94,7 +95,7 @@ def cleanText(data):
     return cleaned
 
 
-def calculateDocFreqs(wordList):
+def calculateDocFreqsSlow(wordList):
     """
     takes in a list and counts the frequency of values in list
     :param wordList: a list whose values will be counted
@@ -102,15 +103,29 @@ def calculateDocFreqs(wordList):
     """
     wordFreq = dict()
     numOfWords = len(wordList)
-    for wIX, w  in enumerate(wordList):
+    for w in wordList:
         if w not in wordFreq.keys():
             count = 0
-            for ix in range(wIX, numOfWords):
+            for ix in range(numOfWords):
                 if w == wordList[ix]:
                     count += 1
             wordFreq[w] = count
     return wordFreq
 
+
+def calculateDocFreqs(wordList):
+    """
+    takes in a list and counts the frequency of values in list
+    :param wordList: a list whose values will be counted
+    :return: wordFreq: dictionary of value in list and its frequency in that list
+    """
+    wordFreq = dict()
+    for wIX, w in enumerate(wordList):
+        if w not in wordFreq.keys():
+            wordFreq[w] = 1
+        else:
+            wordFreq[w] += 1
+    return wordFreq
 
 def scoreWords(wordList, wordFreq):
     """
@@ -200,6 +215,7 @@ def nonWords(cleanedList, freqFile):
 
 if __name__ == "__main__":
 
+    startTime = dt.datetime.now()
     # if you want just a certain page, use extractList
     # wList = extractList('DOT_PerformancePlan.pdf', 10)
 
@@ -233,4 +249,6 @@ if __name__ == "__main__":
     # top 10 tf-idf scores of 'non-real' words
     reportScores(scoreWords(nonList, wFreq), 10)
 
+    endTime = dt.datetime.now()
+    print(f"Started at {startTime} and took {(endTime-startTime).seconds} seconds")
 
