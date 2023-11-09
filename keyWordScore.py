@@ -62,7 +62,7 @@ def extractDict(document):
     return textDict
 
 
-def calculateDocFreqs(wordList):
+def calculateDocFreqsSlow(wordList):
     """
     takes in a list and counts the frequency of values in list
     :param wordList: a list whose values will be counted
@@ -75,6 +75,7 @@ def calculateDocFreqs(wordList):
                 wordFreq[w] = 1
             else:
                 wordFreq[w] += 1
+
     return wordFreq
 
 def eachPage(pagesDict):
@@ -94,6 +95,20 @@ trying to make a nested dictionary with {page number: {word: word frequency}} fo
 but it still is just taking the frequency of words over the whole document
 """
 
+
+def calculateDocFreqs(wordList):
+    """
+    takes in a list and counts the frequency of values in list
+    :param wordList: a list whose values will be counted
+    :return: wordFreq: dictionary of value in list and its frequency in that list
+    """
+    wordFreq = dict()
+    for wIX, w in enumerate(wordList):
+        if w not in wordFreq.keys():
+            wordFreq[w] = 1
+        else:
+            wordFreq[w] += 1
+    return wordFreq
 
 def scoreWords(wordList, wordFreq):
     """

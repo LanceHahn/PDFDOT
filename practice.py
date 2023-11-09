@@ -14,6 +14,7 @@ def readCorpus(document):
     page
     :param document: the PDF document to be analyzed
     :return: pageText is the extracted lowercase text
+
     """
     reader = PdfReader(document)
     pageText = []
@@ -45,10 +46,12 @@ def combineSentences(sentenceTuples):
     res = list(map(tuple,res))
     return res
 
+
 # Download model
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
 # Corpus of documents and their embeddings
+
 corpus = readCorpus('DOT_PerformancePlan.pdf')
 
 # Combined sentences on each page, first element is page number
@@ -56,6 +59,13 @@ newCorpus = combineSentences(corpus)
 
 # did not change this, so it still encodes based on tuple of (pageNum, individual sentence), not newCorpus
 # tried changing it to work for newCorpus, but couldn't get it right
+
+#corpus = ['Python is an interpreted high-level general-purpose programming language.',
+#    'Python is dynamically-typed and garbage-collected.',
+#    'The quick brown fox jumps over the lazy dog.']
+#
+#corpus = readCorpus('DOT_PerformancePlan.pdf')
+#
 corpus_embeddings = model.encode([x[1] for x in corpus])
 
 # Queries and their embeddings
@@ -70,6 +80,7 @@ hits = util.semantic_search(queries_embeddings, corpus_embeddings, top_k=10)
 print(f"Query: {queries[0]}")
 for hit in hits[0]:
     print(f"{hit['score']}: {corpus[hit['corpus_id']]}")
+
 
 # Run key-word analysis to generate key word list for each page.
 # re-assemble each page of text from corpus
