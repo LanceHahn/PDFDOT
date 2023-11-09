@@ -23,20 +23,24 @@ def getFreqs(fName):
     return freqDict
 
 
-def extractList(document, pageNum):
+def cleanText(data):
     """
-    reads in PDF document, extracts text, and splits text into list.
-    converts all values into lower case.
-    :param document: PDF document to analyze
-    :param pageNum: page number you are searching
-    :return: list of values extracted from PDF
+    cleans data entered into function, including eliminating punctuation characters and extra space
+    :param data: list of values that need to be cleaned
+    :return: list of cleaned data
     """
-    reader = PdfReader(document)
-    page = reader.pages[pageNum]
-    pageExtract = page.extract_text()
-    pageOutput = pageExtract.split()
-    pageOutput = [x.lower() for x in pageOutput]
-    return pageOutput
+    cleaned = []
+    for datum in data:
+        clean = datum.rstrip()
+        digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        for char in ['.', ',', '"', "'", "?", '“', '\t', '\r', '\n',
+                     '’', '”', ':', ';', '*', '|', '%', '(', ')', '[', ']',
+                     '•', '&', '/'] + digits:
+            clean = clean.replace(char, '')
+        clean = clean.lower()
+        if len(clean) > 0:
+            cleaned.append(clean)
+    return cleaned
 
 def extractDict(document):
     """
@@ -53,64 +57,43 @@ def extractDict(document):
         pageExtract = page.extract_text()
         pageOutput = pageExtract.split()
         pageOutput = [x.lower() for x in pageOutput]
+        pageOutput = cleanText(pageOutput)
         textDict[i] = pageOutput
     return textDict
-
-def separateDict(textDict):
-    """
-    reads in a dictionary where each value is a list and compiles those lists
-    into one large list of all values
-    :param textDict: dictionary to be split into only its values
-    :return: flat_list is the list of all values from original dictionary
-    (flat_list still needs to be cleaned)
-    """
-    valuesList = []
-    keys = textDict.keys()
-    dictValues = textDict.values()
-    for i in dictValues:
-        valuesList.append(i)
-    wordList = []
-    for list in valuesList:
-        wordList.extend(list)
-    return wordList
-
-
-def cleanText(data):
-    """
-    cleans data entered into function, including eliminating punctuation characters and extra space
-    :param data: list of values that need to be cleaned
-    :return: list of cleaned data
-    """
-    cleaned = []
-    for datum in data:
-        clean = datum.rstrip()
-        digits = ['0','1','2','3','4','5','6','7','8','9']
-        for char in ['.', ',', '"', "'", "?", '“', '\t', '\r', '\n',
-                     '’', '”', ':', ';','*', '|', '%','(',')','[',']',
-                     '•', '&', '/'] + digits:
-            clean = clean.replace(char, '')
-        clean = clean.lower()
-        if len(clean) > 0:
-            cleaned.append(clean)
-    return cleaned
 
 
 def calculateDocFreqsSlow(wordList):
     """
     takes in a list and counts the frequency of values in list
     :param wordList: a list whose values will be counted
-    :return: wordFreq: dictionary of value in list and its frequency in that list
+    :return: wordFreq: large dictionary of value in list (word in document) and its frequency in that list (document)
     """
     wordFreq = dict()
-    numOfWords = len(wordList)
-    for w in wordList:
-        if w not in wordFreq.keys():
-            count = 0
-            for ix in range(numOfWords):
-                if w == wordList[ix]:
-                    count += 1
-            wordFreq[w] = count
+    for i in wordList:
+        for wIX, w in enumerate(i):
+            if w not in wordFreq.keys():
+                wordFreq[w] = 1
+            else:
+                wordFreq[w] += 1
+
     return wordFreq
+
+def eachPage(pagesDict):
+    wordFreq = dict()
+    pageWordFreq = {}
+    for value in wDict:
+        for wIX, w in enumerate(pagesDict[value]):
+            if w not in wordFreq.keys():
+                wordFreq[w] = 1
+            else:
+                wordFreq[w] += 1
+        pageWordFreq[value] = wordFreq
+    return pageWordFreq
+"""
+STUCK HERE !!!!
+trying to make a nested dictionary with {page number: {word: word frequency}} for each page
+but it still is just taking the frequency of words over the whole document
+"""
 
 
 def calculateDocFreqs(wordList):
@@ -157,33 +140,6 @@ def reportScores(scores, TopN):
     return
 
 
-
-def reportHisto(histogram, TopN, title="title", xLabel = 'xLabel'):
-    """
-    plots a histogram provided with a title
-    :param histogram: a dict containing words as keys and the number of
-    times the importance measure as value.
-    :param title: title of plot
-    :return: None
-    """
-    words = []
-    freqs = []
-    ix = 1
-    for k, v in sorted(histogram.items(), key=lambda item: -item[1]):
-        if ix <= TopN:
-            words.append(k)
-            freqs.append(histogram[k])
-        ix += 1
-    ax = sns.barplot(y=xLabel, x='word',
-                     data={xLabel: words, 'word': freqs},
-                     palette="rocket_r")
-    ax.set(xlabel=xLabel, title=title)
-    plt.show()
-    return
-
-
-
-
 def realWords(cleanedList, freqFile):
     """
     checks cleanedList of extracted text against KFreq file
@@ -222,16 +178,14 @@ if __name__ == "__main__":
     # dictionary of {page number: list of extracted text} from PDF
     wDict = extractDict('DOT_PerformancePlan.pdf')
 
-    # compiled list of all text from PDF
-    wList = separateDict(wDict)
-
     # cleaned list of extracted text
-    newList = cleanText(wList)
+    newList = wDict.values()
+
    # frequency that words apepar in cleaned list
     wFreq = calculateDocFreqs(newList)
 
     # calculated tf-idf scores of each word in cleaned list
-    wordScores = scoreWords(newList, wFreq)
+    wordScores = scoreWords(wDict.values(), wFreq)
 
     # print words with top five tf-idf scores
     # reportScores(wordScores, 20)
@@ -244,11 +198,14 @@ if __name__ == "__main__":
     nonList = nonWords(newList, 'KFfreq.csv')
 
     # top 5 tf-idf scores of 'real' words
-    reportScores(scoreWords(realList, wFreq), 10)
+    # this is what we care about!!
+    # reportScores(scoreWords(realList, wFreq), 10)
 
     # top 10 tf-idf scores of 'non-real' words
-    reportScores(scoreWords(nonList, wFreq), 10)
+   # reportScores(scoreWords(nonList, wFreq), 10)
 
     endTime = dt.datetime.now()
     print(f"Started at {startTime} and took {(endTime-startTime).seconds} seconds")
 
+# not working... note below eachPage function
+print(eachPage(wDict))
