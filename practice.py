@@ -66,7 +66,8 @@ newCorpus = combineSentences(corpus)
 #
 #corpus = readCorpus('DOT_PerformancePlan.pdf')
 #
-corpus_embeddings = model.encode([x[1] for x in corpus])
+# corpus_embeddings = model.encode([x[1] for x in corpus])
+corpus_embeddings = model.encode([sent for page in newCorpus for sent in page[1:]])
 
 # Queries and their embeddings
 queries = [input('search:\n')]
@@ -88,3 +89,4 @@ for hit in hits[0]:
 # look for amount overlap between the identified key words for each page and
 # the words in the search
 # list the pages with most overlap and what query words were included
+print("Done")
