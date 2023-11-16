@@ -18,8 +18,9 @@ def readCorpus(document):
     """
     reader = PdfReader(document)
     pageText = []
+    print("processing page ")
     for pageNum in range(len(reader.pages)):
-        print(f"processing page {pageNum}")
+        print(f"{pageNum} ",end="")
         page = reader.pages[pageNum]
         pageExtract = page.extract_text()
         pageExtract = cleanString(pageExtract)
@@ -27,6 +28,7 @@ def readCorpus(document):
         sentenceList = [(pageNum, x) for x in splitPeriod if len(x.split()) > 0]
         if sentenceList != []:
             pageText.extend(sentenceList)
+    print()
     return pageText
 
 def combineSentences(sentenceTuples):
@@ -46,6 +48,7 @@ def combineSentences(sentenceTuples):
     res = list(map(tuple,res))
     return res
 
+# MAIN
 
 # Download model
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
@@ -70,16 +73,42 @@ corpus_embeddings = model.encode([x[1] for x in corpus])
 
 # Queries and their embeddings
 queries = [input('search:\n')]
-print(f"your search: {queries}")
-queries_embeddings = model.encode(queries)
+while len(queries) > 0 and queries[0] != 'quit':
+    print(f"your search: {queries}")
+    queries_embeddings = model.encode(queries)
 
-# Find the top-10 corpus documents matching each query
-hits = util.semantic_search(queries_embeddings, corpus_embeddings, top_k=10)
+    # Find the top-10 corpus documents matching each query
+    hits = util.semantic_search(queries_embeddings, corpus_embeddings, top_k=10)
 
-# Print results of first query
-print(f"Query: {queries[0]}")
-for hit in hits[0]:
-    print(f"{hit['score']}: {corpus[hit['corpus_id']]}")
+
+    qWords = queries[0].split()
+    lineNum = 0
+    lineNumInPage = 0
+    lastPage = -1
+    for pgNum, lineTxt in corpus:
+        if pgNum != lastPage:
+            lastPage = pgNum
+            lineNumInPage = 0
+        lineNum += 1
+        lineNumInPage += 1
+        if all(x in lineTxt for x in qWords):
+            print(f"{lineNum} {pgNum}:{lineNumInPage} {lineTxt}")
+            ids = [ix for ix, x in enumerate(hits[0]) if corpus[x['corpus_id']][1] == lineTxt]
+            if len(ids) > 0:
+                print(f"score changed from {hits[0][ids[0]]['score']} to")
+                hits[0][ids[0]]['score'] += .1
+                if hits[0][ids[0]]['score'] > 1.0:
+                    hits[0][ids[0]]['score'] = 1.0
+                print(f" {hits[0][ids[0]]['score']}")
+
+    hits[0].sort(key=lambda x: -x['score'])
+    # Print results of first query
+    print(f"Query: {queries[0]}")
+    for hit in hits[0]:
+        print(f"{hit['score']}: {corpus[hit['corpus_id']]}")
+
+    queries = [input('search:\n')]
+
 
 
 # Run key-word analysis to generate key word list for each page.
