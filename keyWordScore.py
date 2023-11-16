@@ -180,9 +180,10 @@ if __name__ == "__main__":
 
     # cleaned list of extracted text
     newList = wDict.values()
-
+    wFreq = {}
    # frequency that words apepar in cleaned list
-    wFreq = calculateDocFreqs(newList)
+    for pgIX, pg in enumerate(newList):
+        wFreq[pgIX] = calculateDocFreqs(pg)
 
     # calculated tf-idf scores of each word in cleaned list
     wordScores = scoreWords(wDict.values(), wFreq)
