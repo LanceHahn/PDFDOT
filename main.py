@@ -15,7 +15,8 @@ def findKeyword(document, pageNum, targetWord):
     pageExtract = page.extract_text()
     pageOutput = pageExtract.split()
     pageOutputLower = [x.lower() for x in pageOutput]
-    print(pageOutputLower)
+    print(f"Searching page {pageNum} of {document} for {targetWord}")
+    print(f"{len(pageOutputLower)} strings: {pageOutputLower}")
     if targetWord in pageOutputLower:
         wordCount = pageOutputLower.count(targetWord)
         print(f"yes, {targetWord} is in this page {wordCount} time(s)")
@@ -23,4 +24,5 @@ def findKeyword(document, pageNum, targetWord):
         print("no")
     return pageOutputLower
 
+print("A simple search for a word in the text of a PDF document.")
 findKeyword('DOT_PerformancePlan.pdf',20,'safety')
