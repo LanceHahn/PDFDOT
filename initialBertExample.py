@@ -19,6 +19,7 @@ embeddings2 = model.encode(sentences2, convert_to_tensor=True)
 cosine_scores = util.cos_sim(embeddings1, embeddings2)
 
 #Output the pairs with their score
+print("sentence #1 \t\t Sentence #2  \t\t Cosine Similarity")
 for i in range(len(sentences1)):
     print("{} \t\t {} \t\t Score: {:.4f}".format(sentences1[i], sentences2[i], cosine_scores[i][i]))
 
